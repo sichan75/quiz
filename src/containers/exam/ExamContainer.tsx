@@ -14,12 +14,27 @@ const Wrapper = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-right: 500px;
   flex: 1;
+  height: 100vh;
 `;
 
-const Question = styled.div`max-width: 35vw;`;
+const Count = styled.p`
+  font-size: 20px;
+  margin: 10px;
+  color: gray;
+`;
 
+const Question = styled.div`
+  position: relative;
+  width: 380px;
+`;
+
+const ButtonWrapper = styled.div`
+  display: flex;
+  margin-top: 20px;
+  flex: 1;
+  flex-grow: 1;
+`;
 
 export const ExamContainer = () => {
   const { count: selectedCount, time: selectedTime } = useParams();
@@ -35,7 +50,9 @@ export const ExamContainer = () => {
 
   const initInfos = useCallback(
     () => {
-      console.log(exams)
+      if (exams[0].right === '' && exams[0].src === '') {
+        navigate('/');
+      }
       const sanitizedLabels = exams.map((exam) => {
         return { src: exam.src, value: '', right: exam.right.replace(/-\d{1,2}/g, '') };
       });
@@ -52,7 +69,7 @@ export const ExamContainer = () => {
       });
       setInfos(calculatedData);
     },
-    [exams, selectedCount],
+    [exams, navigate, selectedCount],
   );
 
   const handleSubmit = useCallback(
@@ -68,16 +85,16 @@ export const ExamContainer = () => {
       play();
       setValue('');
       infos[cursor].value = value;
-
+      setTime(Number(selectedTime));
       if (infos.length - 1 === cursor) {
         // 마지막 문제면 제출
         handleSubmit();
       } else {
         setCursor((value) => value + 1);
-        textFieldRef.current?.focus();
+        textFieldRef.current && textFieldRef.current.focus();
       }
     },
-    [play, infos, cursor, value, handleSubmit],
+    [play, infos, cursor, value, selectedTime, handleSubmit],
   );
 
   const handleKeyDown = useCallback(
@@ -92,10 +109,9 @@ export const ExamContainer = () => {
   useEffect(
     () => {
       const timer = setInterval(() => {
-
         setTime((value) => {
           if (value === 0) {
-            handleNextQuestion()
+            handleNextQuestion();
             return Number(selectedTime);
           }
           return value - 1;
@@ -120,8 +136,10 @@ export const ExamContainer = () => {
 
   return (
     <Wrapper>
-      <Question style={{ position: 'relative' }}>
-        <p style={{ fontSize: 20, margin: 10, color: 'gray' }}>{cursor + 1}번</p>
+      <Question>
+        <Count>
+          {cursor + 1} / {infos.length}
+        </Count>
         <p
           style={{
             fontSize: 30,
@@ -129,7 +147,7 @@ export const ExamContainer = () => {
             color: time < 6 ? 'red' : 'black',
           }}
         >
-          {time}
+          {time}초
         </p>
 
         <TransformWrapper>
@@ -142,9 +160,8 @@ export const ExamContainer = () => {
                     src={infos[cursor].src}
                     alt=""
                     style={{
-                      width: '100%',
-                      maxHeight: 500,
-                      backgroundColor: 'red',
+                      width: 380,
+                      height: 250,
                     }}
                   />
                 </TransformComponent>
@@ -171,35 +188,34 @@ export const ExamContainer = () => {
             alignItems: 'center',
             flexDirection: 'column',
             marginTop: 30,
+            flex: 1,
           }}
         >
           <TextField
             inputRef={textFieldRef}
             autoFocus
-            style={{ width: 375, marginTop: 30 }}
+            style={{ width: 380, marginTop: 30 }}
             label="정답"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleNextQuestion}
-            style={{ marginTop: 20, width: 250 }}
-          >
-            {infos.length - 1 === cursor ? '제출' : '다음'}
-          </Button>
+          <ButtonWrapper>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleNextQuestion}
+              style={{ width: 290, marginRight: 10, padding: 12 }}
+            >
+              {infos.length - 1 === cursor ? '제출' : '다음'}
+            </Button>
+
+            <Button variant="contained" color="secondary" onClick={handleSubmit} style={{ width: 55, padding: 12 }}>
+              제출
+            </Button>
+          </ButtonWrapper>
         </div>
       </Question>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleSubmit}
-        style={{ width: '100%', marginBottom: 40 }}
-      >
-        제출하기
-      </Button>
     </Wrapper>
   );
 };

@@ -1,24 +1,73 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Button, FormControlLabel, Radio, RadioGroup } from '@material-ui/core';
+import { Button, Typography } from '@material-ui/core';
 import { useDropzone } from 'react-dropzone';
-import { HomeSidebar } from '../../components/home/HomeSidebar';
 import { useRecoilState } from 'recoil';
 import { examsState } from '../../recoil/states';
+import { VerticalSpacer } from '../../components/common/VerticalSpacer';
+import { OptionsSelectorModal } from '../../components/home/OptionsSelectorModal';
+import { getSampleExam } from '../../helpers/image';
 
-const getSampleExam = () => {
-  const data = require.context('../../sampleExams/', false, /\.(png|jpe?g|svg)$/) as any;
-  return data.keys().reduce((acc: { [x: string]: any; }, next: string) => {
-    acc[next.replace('./', '')] = require.context('../../sampleExams/', false, /\.(png|jpe?g|svg)$/)(next);
-    return acc;
-  }, {});
-};
+const Wrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+`;
+
+const HomeWrapper = styled.div`
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+`;
+
+const ExamList = styled.div`
+  position: relative;
+  width: 100%;
+  height: 350px;
+  overflow-y: scroll;
+  border: 1px solid #eaeaea;
+`;
+
+const ItemButton =styled.button<{ isSelected: boolean }>`
+  width: 100%;
+  display: flex;
+  padding: 5px 20px;
+  border-bottom: 1px solid #eaeaea;
+  background-color: ${(props) => (props.isSelected ? '#f0f0f0' : 'white')};
+
+  &:hover {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+`;
+
+const ButtonWrapper = styled.div`
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  background-color: white;
+`;
+
+const Exam = styled.div`
+  width: 100%;
+  height: 260px;
+  margin: auto auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #eaeaea;
+`;
 
 interface LocalExamsItem {
   right: string;
   src: string | ArrayBuffer;
-};
+}
 
 const uploadImage = (files: File[]) => {
   const results: LocalExamsItem[] = [];
@@ -28,14 +77,14 @@ const uploadImage = (files: File[]) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (e) => {
-      if (e.target?.result) {
-        results.push({ right: sanitizedFileName, src: e.target?.result });
+      if (e.target && e.target.result) {
+        results.push({ right: sanitizedFileName, src: e.target.result });
       }
     };
   });
 
   setTimeout(() => {
-    const localExams = JSON.parse(localStorage.getItem('data') ?? '[]');
+    const localExams = JSON.parse(localStorage.getItem('data') || '[]');
     const items: LocalExamsItem[] = [...results, ...localExams];
     const uniques: any = [...new Map(items.map((item) => [item.right, item])).values()] as any;
     localStorage.setItem('data', JSON.stringify(uniques));
@@ -44,22 +93,8 @@ const uploadImage = (files: File[]) => {
 
 export const HomeContainer = () => {
   const [exams, setExams] = useRecoilState(examsState);
-
-  const [count, setCount] = useState('');
-  const [time, setTime] = useState('');
-  const navigate = useNavigate();
-
-  const handleChangeCount = (_event: React.ChangeEvent<HTMLInputElement>, value: string) => {
-    setCount(value);
-  };
-
-  const handleChangeTime = (_event: React.ChangeEvent<HTMLInputElement>, value: string) => {
-    setTime(value);
-  };
-
-  const handleClickStartButton = () => {
-    navigate(`/test/count=${count}/time=${time}`);
-  };
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [isOptionsSelectorModalOpened, setIsOptionsSelectorModalOpened] = useState(false);
 
   const initExams = useCallback(
     () => {
@@ -75,7 +110,7 @@ export const HomeContainer = () => {
           src: item[1],
         };
       });
-      const calculatedLocal = JSON.parse(localExams || "[]").map((item: { right: string; src: string; }) => {
+      const calculatedLocal = JSON.parse(localExams || '[]').map((item: { right: string; src: string }) => {
         return {
           right: item.right,
           src: item.src,
@@ -93,7 +128,7 @@ export const HomeContainer = () => {
     },
     [initExams],
   );
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps } = useDropzone({
     accept: ['image/png', 'image/jpeg'],
     onDrop: (acceptedFiles) => {
       uploadImage(acceptedFiles);
@@ -103,82 +138,57 @@ export const HomeContainer = () => {
     },
   });
 
+  const handleRequestShowOptionsSelectorModal = () => {
+    setIsOptionsSelectorModalOpened(true);
+  };
+
+  const handleRequestCloseOptionsSelectorModal = () => {
+    setIsOptionsSelectorModalOpened(false);
+  };
+
   return (
     <Wrapper>
-      <SideBarWrapper>
-        <HomeSidebar exams={exams} />
-      </SideBarWrapper>
       <HomeWrapper>
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          <div className="inner">
-            <Title>문제 수</Title>
-            <RadioGroup name="questions" value={count} onChange={handleChangeCount}>
-              <FormControlLabel value="40" control={<Radio />} label="40문제" />
-              <FormControlLabel value="60" control={<Radio />} label="60문제" />
-              <FormControlLabel value="80" control={<Radio />} label="80문제" />
-              <FormControlLabel value="100" control={<Radio />} label="100문제" />
-              <FormControlLabel value="120" control={<Radio />} label="120문제" />
-            </RadioGroup>
-          </div>
-          <div className="inner">
-            <Title>문제당 시간</Title>
-            <RadioGroup name="time" value={time} onChange={handleChangeTime}>
-              <FormControlLabel value="15" control={<Radio />} label="15초" />
-              <FormControlLabel value="20" control={<Radio />} label="20초" />
-              <FormControlLabel value="25" control={<Radio />} label="25초" />
-              <FormControlLabel value="30" control={<Radio />} label="30초" />
-              <FormControlLabel value="40" control={<Radio />} label="40초" />
-            </RadioGroup>
-          </div>
-        </div>
-        <div {...getRootProps({ className: 'dropzone' })}>
-          <input {...getInputProps()} />
-          <p>Drag 'n' drop some files here, or click to select files</p>
-        </div>
+        <Exam style={{ backgroundColor: cursor !== null ? 'white' : '#eaeaea' }}>
+          {cursor !== null && (
+            <React.Fragment>
+              <img src={exams[cursor].src} alt="" style={{ maxWidth: 380, maxHeight: 220, marginBottom: 8 }} />
+              <Typography variant="body1">정답: {exams[cursor].right}</Typography>
+            </React.Fragment>
+          )}
+        </Exam>
+        <VerticalSpacer size={40} />
+        <ExamList>
+          {exams.map((exam, index) => {
+            return (
+              <ItemButton key={index.toString()} onClick={() => setCursor(index)} isSelected={cursor === index}>
+                <Typography variant="h6">{exam.right}</Typography>
+              </ItemButton>
+            );
+          })}
+        </ExamList>
 
-        <div className="inner">
+        <ButtonWrapper>
+          <div {...getRootProps({ className: 'dropzone' })}>
+            <Button variant="contained" color="primary" style={{ width: 150, padding: 12 }}>
+              <Typography variant="body1">추가하기</Typography>
+            </Button>
+          </div>
+
           <Button
             variant="contained"
-            color="secondary"
-            onClick={handleClickStartButton}
-            disabled={!count || !time}
-            style={{ width: 250, padding: 12 }}
+            color="primary"
+            onClick={handleRequestShowOptionsSelectorModal}
+            style={{ width: 150, padding: 12 }}
           >
-            <span style={{ fontSize: 20, fontWeight: 'bold' }}>시작</span>
+            <Typography variant="body1">시험보기</Typography>
           </Button>
-        </div>
+        </ButtonWrapper>
       </HomeWrapper>
+      <OptionsSelectorModal
+        isOpen={isOptionsSelectorModalOpened}
+        onRequestClose={handleRequestCloseOptionsSelectorModal}
+      />
     </Wrapper>
   );
 };
-
-const Wrapper = styled.div`
-  display: flex;
-  justify-content: center;
-`;
-
-const HomeWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  .inner {
-    margin: 10px 40px;
-    display: flex;
-    flex-direction: column;
-  }
-`;
-
-const Title = styled.span`
-  font-size: 22px;
-  line-height: 44px;
-  font-weight: bold;
-  color: red;
-`;
-
-const SideBarWrapper = styled.div`
-  right: 0;
-  position: fixed;
-  transition: right 0.5s;
-  z-index: 99;
-`;
