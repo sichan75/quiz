@@ -4,14 +4,15 @@ import { HomePage } from './pages/HomePage';
 import { ExamPage } from './pages/ExamPage';
 import { ResultPage } from './pages/ResultPage';
 
+
 export const App = () => {
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL}>
       <RecoilRoot>
         <Routes>
-          <Route exact path="/" element={<HomePage />} />
-          <Route exact path="/test/count=:count/time=:time" element={<ExamPage />} />
-          <Route exact path="/result" element={<ResultPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/test/count=:count/time=:time" element={<ExamPage />} />
+          <Route path="/result" element={<ResultPage />} />
         </Routes>
       </RecoilRoot>
     </Router>

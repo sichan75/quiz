@@ -8,28 +8,36 @@ import { useRecoilState } from 'recoil';
 import { examsState } from '../../recoil/states';
 
 const getSampleExam = () => {
-  const data = require.context('../../sampleExams/', false, /\.(png|jpe?g|svg)$/);
-  return data.keys().reduce((acc, next) => {
+  const data = require.context('../../sampleExams/', false, /\.(png|jpe?g|svg)$/) as any;
+  return data.keys().reduce((acc: { [x: string]: any; }, next: string) => {
     acc[next.replace('./', '')] = require.context('../../sampleExams/', false, /\.(png|jpe?g|svg)$/)(next);
     return acc;
   }, {});
 };
 
-const uploadImage = (files) => {
-  const results = [];
+interface LocalExamsItem {
+  right: string;
+  src: string | ArrayBuffer;
+};
+
+const uploadImage = (files: File[]) => {
+  const results: LocalExamsItem[] = [];
+
   files.forEach((file) => {
     const sanitizedFileName = file.name.replace(/\.(png|jpe?g|svg)$/, '');
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (e) => {
-      results.push({ name: sanitizedFileName, src: e.target.result });
+      if (e.target?.result) {
+        results.push({ right: sanitizedFileName, src: e.target?.result });
+      }
     };
   });
 
   setTimeout(() => {
-    const localExams = JSON.parse(localStorage.getItem('data'));
-    const items = [...results, ...localExams];
-    const uniques = [...new Map(items.map((item) => [item.name, item])).values()];
+    const localExams = JSON.parse(localStorage.getItem('data') ?? '[]');
+    const items: LocalExamsItem[] = [...results, ...localExams];
+    const uniques: any = [...new Map(items.map((item) => [item.right, item])).values()] as any;
     localStorage.setItem('data', JSON.stringify(uniques));
   }, 100);
 };
@@ -37,16 +45,16 @@ const uploadImage = (files) => {
 export const HomeContainer = () => {
   const [exams, setExams] = useRecoilState(examsState);
 
-  const [count, setCount] = useState(0);
-  const [time, setTime] = useState(0);
+  const [count, setCount] = useState('');
+  const [time, setTime] = useState('');
   const navigate = useNavigate();
 
-  const handleChangeCount = (event) => {
-    setCount(event.target.value);
+  const handleChangeCount = (_event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+    setCount(value);
   };
 
-  const handleChangeTime = (event) => {
-    setTime(event.target.value);
+  const handleChangeTime = (_event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+    setTime(value);
   };
 
   const handleClickStartButton = () => {
@@ -56,7 +64,7 @@ export const HomeContainer = () => {
   const initExams = useCallback(
     () => {
       const sampleExams = getSampleExam();
-      const localExams = JSON.parse(localStorage.getItem('data'));
+      const localExams = localStorage.getItem('data');
       const sampleData = Object.keys(sampleExams).map((key) => [key, sampleExams[key]]);
       const sanitizedExtension = sampleData.map((e) => [e[0].replace(/\.(png|jpe?g|svg)$/, ''), e[1]]);
       const sanitizedUnderbar = sanitizedExtension.map((e) => [e[0].replace(/_/g, ' '), e[1]]);
@@ -67,9 +75,9 @@ export const HomeContainer = () => {
           src: item[1],
         };
       });
-      const calculatedLocal = localExams.map((item) => {
+      const calculatedLocal = JSON.parse(localExams || "[]").map((item: { right: string; src: string; }) => {
         return {
-          right: item.name,
+          right: item.right,
           src: item.src,
         };
       });
@@ -86,7 +94,7 @@ export const HomeContainer = () => {
     [initExams],
   );
   const { getRootProps, getInputProps } = useDropzone({
-    accepts: ['image/png', 'image/jpeg'],
+    accept: ['image/png', 'image/jpeg'],
     onDrop: (acceptedFiles) => {
       uploadImage(acceptedFiles);
       setTimeout(() => {
@@ -94,6 +102,7 @@ export const HomeContainer = () => {
       }, 100);
     },
   });
+
   return (
     <Wrapper>
       <SideBarWrapper>

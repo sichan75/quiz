@@ -4,8 +4,6 @@ import styled from 'styled-components';
 export const HomeSidebar = ({ exams }) => {
   const [cursor, setCursor] = useState(null);
 
-  console.log(exams);
-
   return (
     <div>
       {cursor !== null && (
@@ -19,7 +17,7 @@ export const HomeSidebar = ({ exams }) => {
         <ExamsWrapper>
           {exams.map((exam, index) => {
             return (
-              <Item onMouseEnter={() => setCursor(index)} onMouseLeave={() => setCursor(null)}>
+              <Item key={index.toString()} onMouseEnter={() => setCursor(index)} onMouseLeave={() => setCursor(null)}>
                 <p>{index + 1}.</p>
                 <ItemTitle>{exam.right}</ItemTitle>
               </Item>

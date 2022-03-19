@@ -9,7 +9,7 @@ import { resultsState } from '../../recoil/states';
 
 export const ResultContainer = () => {
   const results = useRecoilValue(resultsState);
-  const [cursor, setCursor] = useState(null);
+  const [cursor, setCursor] = useState<number | null>(null);
 
   const sum = useMemo(
     () => {
@@ -22,7 +22,7 @@ export const ResultContainer = () => {
     [results],
   );
 
-  const handleClickAnswer = (i) => {
+  const handleClickAnswer = (i: number) => {
     if (i === cursor) {
       setCursor(null);
       return;
@@ -38,7 +38,7 @@ export const ResultContainer = () => {
           return (
             <div style={{ display: 'flex', alignItems: 'center' }} key={i.toString()}>
               <AnswerButton
-                key={i}
+                key={i.toString()}
                 onClick={() => handleClickAnswer(i)}
                 style={{ backgroundColor: cursor === i ? '#eaeaea' : 'white' }}
               >
