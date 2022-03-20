@@ -132,18 +132,26 @@ export const HomeContainer = () => {
     <Wrapper>
       <HomeWrapper>
         <Exam style={{ backgroundColor: cursor !== null ? 'white' : '#eaeaea' }}>
-          {cursor !== null && (
+          {cursor !== null ? (
             <React.Fragment>
               <img src={questions[cursor].src} alt="" style={{ maxWidth: 380, maxHeight: 210, marginBottom: 8 }} />
               <Typography variant="body1">정답: {questions[cursor].right}</Typography>
             </React.Fragment>
+          ) : (
+            <Typography variant="body1" color="inherit">
+              이미지를 확인하려면 문제를 선택해 주세요
+            </Typography>
           )}
         </Exam>
         <VerticalSpacer size={20} />
         <ExamList>
           {questions.map((exam, index) => {
             return (
-              <ItemButton key={index.toString()} onClick={() => setCursor(index)} isSelected={cursor === index}>
+              <ItemButton
+                key={index.toString()}
+                onClick={() => setCursor(cursor === index ? null : index)}
+                isSelected={cursor === index}
+              >
                 <Typography style={{ marginLeft: 8 }} variant="h6">
                   {exam.right}
                 </Typography>
