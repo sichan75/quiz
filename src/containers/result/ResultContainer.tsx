@@ -1,5 +1,5 @@
 import { Button, Typography } from '@material-ui/core';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import styled from 'styled-components';
@@ -14,8 +14,10 @@ const Wrapper = styled.div`
   height: 100vh;
 `;
 
-const HomeWrapper = styled.div`
-  width: 380px;
+const ResultWrapper = styled.div`
+  max-width: 380px;
+  width: 100%;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -32,7 +34,7 @@ const ExamList = styled.div`
 `;
 
 const AnswerButton = styled.button`
-  width: 350px;
+  width: 100%;
   border: 1px solid #eaeaea;
   display: flex;
   align-items: center;
@@ -78,7 +80,7 @@ export const ResultContainer = () => {
   const [cursor, setCursor] = useState<number | null>(null);
   const navigate = useNavigate();
 
-  const sum = useMemo(
+  const rightNumber = useMemo(
     () => {
       let cnt = 0;
       results.forEach((item) => {
@@ -89,17 +91,20 @@ export const ResultContainer = () => {
     [results],
   );
 
-  const handleClickAnswer = (i: number) => {
-    if (i === cursor) {
-      setCursor(null);
-      return;
-    }
-    setCursor(i);
-  };
+  const handleClickAnswerButton = useCallback(
+    (i: number) => {
+      if (i === cursor) {
+        setCursor(null);
+        return;
+      }
+      setCursor(i);
+    },
+    [cursor],
+  );
 
   return (
     <Wrapper>
-      <HomeWrapper>
+      <ResultWrapper>
         <Exam style={{ backgroundColor: cursor !== null ? 'white' : '#eaeaea' }}>
           {cursor !== null && (
             <React.Fragment>
@@ -110,16 +115,21 @@ export const ResultContainer = () => {
         </Exam>
         <ExamList>
           {results.map((item, i) => {
-            const right = item.right === item.value;
+            const isRight = item.right === item.value;
             return (
               <AnswerButton
                 key={i.toString()}
-                onClick={() => handleClickAnswer(i)}
+                onClick={() => handleClickAnswerButton(i)}
                 style={{ backgroundColor: cursor === i ? '#eaeaea' : 'white' }}
               >
                 <AnswerNumber>{i + 1}</AnswerNumber>
-                <img src={right ? rightIcon : wrongIcon} alt="" style={{ width: 18, margin: '0 8px' }} />
-                <p style={{ fontSize: 16 }}>{item.value}</p>
+                <img src={isRight ? rightIcon : wrongIcon} alt="" style={{ width: 18, margin: '0 8px' }} />
+                <p style={{ fontSize: 16, flex: 1, textAlign: 'left' }}>{item.value}</p>
+                {!isRight && (
+                  <Button color="secondary">
+                    <Typography>보기</Typography>
+                  </Button>
+                )}
               </AnswerButton>
             );
           })}
@@ -128,15 +138,20 @@ export const ResultContainer = () => {
         <BottomWrapper>
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
             <span style={{ margin: 4 }}>
-              맞은 개수: <span style={{ fontWeight: 'bold' }}>{sum}</span>
+              맞은 개수: <span style={{ fontWeight: 'bold' }}>{rightNumber}</span>
             </span>
             <span style={{ margin: 4 }}>총 개수: {results.length}</span>
           </div>
-          <Button variant="contained" color="secondary" style={{ width: 90, padding: 12, marginTop: 0 }} onClick={()=>navigate('/')}>
+          <Button
+            variant="contained"
+            color="secondary"
+            style={{ width: 90, padding: 12, marginTop: 0 }}
+            onClick={() => navigate('/')}
+          >
             다시하기
           </Button>
         </BottomWrapper>
-      </HomeWrapper>
+      </ResultWrapper>
     </Wrapper>
   );
 };

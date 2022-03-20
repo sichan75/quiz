@@ -3,10 +3,11 @@ import styled from 'styled-components';
 import { Button, Typography } from '@material-ui/core';
 import { useDropzone } from 'react-dropzone';
 import { useRecoilState } from 'recoil';
-import { examsState } from '../../recoil/states';
+import { questionsState } from '../../recoil/states';
 import { VerticalSpacer } from '../../components/common/VerticalSpacer';
 import { OptionsSelectorModal } from '../../components/home/OptionsSelectorModal';
-import { getSampleExam } from '../../helpers/image';
+import { deleteImage, LocalQuestionItem, uploadImage } from '../../helpers/image';
+import { getSampleQuestions } from '../../helpers/questions';
 
 const Wrapper = styled.div`
   display: flex;
@@ -16,7 +17,9 @@ const Wrapper = styled.div`
 `;
 
 const HomeWrapper = styled.div`
-  width: 380px;
+  max-width: 380px;
+  width: 100%;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,7 +38,8 @@ const ExamList = styled.div`
 const ItemButton =styled.button<{ isSelected: boolean }>`
   width: 100%;
   display: flex;
-  padding: 5px 20px;
+  justify-content: space-between;
+  padding: 5px 0px;
   border-bottom: 1px solid #eaeaea;
   background-color: ${(props) => (props.isSelected ? '#f0f0f0' : 'white')};
 
@@ -48,6 +52,7 @@ const ItemButton =styled.button<{ isSelected: boolean }>`
 const ButtonWrapper = styled.div`
   display: flex;
   width: 100%;
+  margin-top: 20px;
   flex-direction: row;
   justify-content: space-between;
   background-color: white;
@@ -64,79 +69,47 @@ const Exam = styled.div`
   background-color: #eaeaea;
 `;
 
-interface LocalExamsItem {
-  right: string;
-  src: string | ArrayBuffer;
-}
-
-const uploadImage = (files: File[]) => {
-  const results: LocalExamsItem[] = [];
-
-  files.forEach((file) => {
-    const sanitizedFileName = file.name.replace(/\.(png|jpe?g|svg)$/, '');
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      if (e.target && e.target.result) {
-        results.push({ right: sanitizedFileName, src: e.target.result });
-      }
-    };
-  });
-
-  setTimeout(() => {
-    const localExams = JSON.parse(localStorage.getItem('data') || '[]');
-    const items: LocalExamsItem[] = [...results, ...localExams];
-    const uniques: any = [...new Map(items.map((item) => [item.right, item])).values()] as any;
-    localStorage.setItem('data', JSON.stringify(uniques));
-  }, 100);
-};
-
 export const HomeContainer = () => {
-  const [exams, setExams] = useRecoilState(examsState);
+  const [questions, setQuestions] = useRecoilState(questionsState);
   const [cursor, setCursor] = useState<number | null>(null);
   const [isOptionsSelectorModalOpened, setIsOptionsSelectorModalOpened] = useState(false);
 
-  const initExams = useCallback(
-    () => {
-      const sampleExams = getSampleExam();
-      const localExams = localStorage.getItem('data');
-      const sampleData = Object.keys(sampleExams).map((key) => [key, sampleExams[key]]);
-      const sanitizedExtension = sampleData.map((e) => [e[0].replace(/\.(png|jpe?g|svg)$/, ''), e[1]]);
-      const sanitizedUnderbar = sanitizedExtension.map((e) => [e[0].replace(/_/g, ' '), e[1]]);
-
-      const calculatedSample = sanitizedUnderbar.map((item) => {
-        return {
-          right: item[0],
-          src: item[1],
-        };
-      });
-      const calculatedLocal = JSON.parse(localExams || '[]').map((item: { right: string; src: string }) => {
-        return {
-          right: item.right,
-          src: item.src,
-        };
-      });
-
-      setExams([...calculatedLocal, ...calculatedSample]);
-    },
-    [setExams],
-  );
-
-  useEffect(
-    () => {
-      initExams();
-    },
-    [initExams],
-  );
   const { getRootProps } = useDropzone({
     accept: ['image/png', 'image/jpeg'],
     onDrop: (acceptedFiles) => {
       uploadImage(acceptedFiles);
       setTimeout(() => {
-        initExams();
+        initQuestions();
       }, 100);
     },
   });
+
+  const initQuestions = useCallback(
+    () => {
+      const sampleQuestions = getSampleQuestions();
+      const calculatedSample = sampleQuestions.map((item, index) => {
+        return {
+          id: `sample-${index}`,
+          right: item[0],
+          src: item[1],
+        };
+      });
+
+      const localQuestions = localStorage.getItem('data');
+      const calculatedLocal = JSON.parse(localQuestions || '[]').map((item: LocalQuestionItem) => {
+        return {
+          id: item.id,
+          right: item.right,
+          src: item.src,
+        };
+      });
+
+      setQuestions([...calculatedLocal, ...calculatedSample]);
+    },
+    [setQuestions],
+  );
+
+  useEffect(initQuestions, [initQuestions]);
 
   const handleRequestShowOptionsSelectorModal = () => {
     setIsOptionsSelectorModalOpened(true);
@@ -152,14 +125,14 @@ export const HomeContainer = () => {
         <Exam style={{ backgroundColor: cursor !== null ? 'white' : '#eaeaea' }}>
           {cursor !== null && (
             <React.Fragment>
-              <img src={exams[cursor].src} alt="" style={{ maxWidth: 380, maxHeight: 220, marginBottom: 8 }} />
-              <Typography variant="body1">정답: {exams[cursor].right}</Typography>
+              <img src={questions[cursor].src} alt="" style={{ maxWidth: 380, maxHeight: 210, marginBottom: 8 }} />
+              <Typography variant="body1">정답: {questions[cursor].right}</Typography>
             </React.Fragment>
           )}
         </Exam>
-        <VerticalSpacer size={40} />
+        <VerticalSpacer size={20} />
         <ExamList>
-          {exams.map((exam, index) => {
+          {questions.map((exam, index) => {
             return (
               <ItemButton key={index.toString()} onClick={() => setCursor(index)} isSelected={cursor === index}>
                 <Typography variant="h6">{exam.right}</Typography>

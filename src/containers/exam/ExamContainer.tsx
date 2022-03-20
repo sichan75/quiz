@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import useSound from 'use-sound';
 import { Button, TextField } from '@material-ui/core';
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
-import { examsState, ResultItem, resultsState } from '../../recoil/states';
+import { questionsState, resultsState } from '../../recoil/states';
 
 const Wrapper = styled.div`
   display: flex;
@@ -36,27 +36,37 @@ const ButtonWrapper = styled.div`
   flex-grow: 1;
 `;
 
+interface ExamItem {
+  value: string;
+  right: string;
+  src: string;
+}
+
 export const ExamContainer = () => {
   const { count: selectedCount, time: selectedTime } = useParams();
-  const exams = useRecoilValue(examsState);
-  const setAnswers = useSetRecoilState(resultsState);
-  const [time, setTime] = useState(() => Number(selectedTime));
-  const [cursor, setCursor] = useState(0);
-  const [play] = useSound(sound, { volume: 0.3 });
+  const questions = useRecoilValue(questionsState);
+  const setResults = useSetRecoilState(resultsState);
   const navigate = useNavigate();
-  const [value, setValue] = useState('');
-  const [infos, setInfos] = useState<ResultItem[]>([]);
+  const [play] = useSound(sound, { volume: 0.3 });
+
   const textFieldRef = useRef<HTMLInputElement>(null);
 
-  const initInfos = useCallback(
+  const [exams, setExams] = useState<ExamItem[]>([]);
+
+  const [time, setTime] = useState(() => Number(selectedTime));
+  const [cursor, setCursor] = useState(0);
+  const [value, setValue] = useState('');
+
+  const initExam = useCallback(
     () => {
-      if (exams[0].right === '' && exams[0].src === '') {
+      if (questions[0].right === '' && questions[0].src === '') {
         navigate('/');
       }
-      const sanitizedLabels = exams.map((exam) => {
+
+      const sanitizedLabels = questions.map((exam) => {
         return { src: exam.src, value: '', right: exam.right.replace(/-\d{1,2}/g, '') };
       });
-      const uniques: any[] = [...new Map(sanitizedLabels.map((item) => [item.right, item])).values()];
+      const uniques = [...new Map(sanitizedLabels.map((item) => [item.right, item])).values()];
       const shuffled = uniques.sort(() => Math.random() - 0.5);
       const limited = shuffled.slice(0, Number(selectedCount));
 
@@ -67,26 +77,29 @@ export const ExamContainer = () => {
           src: item.src,
         };
       });
-      setInfos(calculatedData);
+      setExams(calculatedData);
     },
-    [exams, navigate, selectedCount],
+    [questions, navigate, selectedCount],
   );
+
+  useEffect(initExam, [initExam]);
 
   const handleSubmit = useCallback(
     () => {
-      setAnswers(infos);
+      setResults(exams);
       navigate('/result');
     },
-    [infos, navigate, setAnswers],
+    [exams, navigate, setResults],
   );
 
   const handleNextQuestion = useCallback(
     () => {
       play();
       setValue('');
-      infos[cursor].value = value;
+      exams[cursor].value = value;
       setTime(Number(selectedTime));
-      if (infos.length - 1 === cursor) {
+
+      if (exams.length - 1 === cursor) {
         // 마지막 문제면 제출
         handleSubmit();
       } else {
@@ -94,7 +107,7 @@ export const ExamContainer = () => {
         textFieldRef.current && textFieldRef.current.focus();
       }
     },
-    [play, infos, cursor, value, selectedTime, handleSubmit],
+    [play, exams, cursor, value, selectedTime, handleSubmit],
   );
 
   const handleKeyDown = useCallback(
@@ -123,14 +136,7 @@ export const ExamContainer = () => {
     [handleNextQuestion, selectedTime],
   );
 
-  useEffect(
-    () => {
-      initInfos();
-    },
-    [initInfos],
-  );
-
-  if (infos.length === 0) {
+  if (exams.length === 0) {
     return null;
   }
 
@@ -138,7 +144,7 @@ export const ExamContainer = () => {
     <Wrapper>
       <Question>
         <Count>
-          {cursor + 1} / {infos.length}
+          {cursor + 1} / {exams.length}
         </Count>
         <p
           style={{
@@ -157,7 +163,7 @@ export const ExamContainer = () => {
                 <TransformComponent>
                   <img
                     className="hover-zoom"
-                    src={infos[cursor].src}
+                    src={exams[cursor].src}
                     alt=""
                     style={{
                       width: 380,
@@ -207,7 +213,7 @@ export const ExamContainer = () => {
               onClick={handleNextQuestion}
               style={{ width: 290, marginRight: 10, padding: 12 }}
             >
-              {infos.length - 1 === cursor ? '제출' : '다음'}
+              {exams.length - 1 === cursor ? '제출' : '다음'}
             </Button>
 
             <Button variant="contained" color="secondary" onClick={handleSubmit} style={{ width: 55, padding: 12 }}>

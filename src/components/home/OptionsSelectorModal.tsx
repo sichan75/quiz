@@ -28,12 +28,12 @@ const SelectorWrapper = styled.div`
   justify-content: space-around;
 `;
 
-interface ExamModalProps {
+interface OptionsSelectorModalProps {
   isOpen: boolean;
   onRequestClose(): void;
 }
 
-export const OptionsSelectorModal: React.FC<ExamModalProps> = ({ isOpen, onRequestClose }) => {
+export const OptionsSelectorModal: React.FC<OptionsSelectorModalProps> = ({ isOpen, onRequestClose }) => {
   const navigate = useNavigate();
   const [count, setCount] = useState(0);
   const [time, setTime] = useState(0);

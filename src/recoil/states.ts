@@ -6,9 +6,9 @@ export interface ResultItem {
   src: string;
 }
 
-export const examsState = atom({
-  key: 'examsState',
-  default: [{ right: '', src: '' }],
+export const questionsState = atom({
+  key: 'questionsState',
+  default: [{ id: '', right: '', src: '' }],
 });
 
 export const resultsState = atom<ResultItem[]>({
