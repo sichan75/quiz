@@ -119,6 +119,15 @@ export const HomeContainer = () => {
     setIsOptionsSelectorModalOpened(false);
   };
 
+  const handleDeleteQuestion = useCallback(
+    (id: string) => {
+      const deleted = questions.filter((question) => question.id !== id);
+      setQuestions(deleted);
+      deleteImage(id);
+    },
+    [questions, setQuestions],
+  );
+
   return (
     <Wrapper>
       <HomeWrapper>
@@ -135,7 +144,15 @@ export const HomeContainer = () => {
           {questions.map((exam, index) => {
             return (
               <ItemButton key={index.toString()} onClick={() => setCursor(index)} isSelected={cursor === index}>
-                <Typography variant="h6">{exam.right}</Typography>
+                <Typography style={{ marginLeft: 8 }} variant="h6">
+                  {exam.right}
+                </Typography>
+                {exam.id &&
+                exam.id.includes('local') && (
+                  <Button color="secondary" onClick={() => handleDeleteQuestion(exam.id)}>
+                    <Typography>삭제</Typography>
+                  </Button>
+                )}
               </ItemButton>
             );
           })}

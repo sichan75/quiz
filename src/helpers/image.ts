@@ -26,4 +26,9 @@ export const uploadImage = (files: File[]) => {
   }, 100);
 };
 
+export const deleteImage = (id: string) => {
+  const localQuestions = JSON.parse(localStorage.getItem('data') || '[]');
+  const deleted = localQuestions.filter((question: LocalQuestionItem) => question.id !== id);
+
+  localStorage.setItem('data', JSON.stringify(deleted));
 };
