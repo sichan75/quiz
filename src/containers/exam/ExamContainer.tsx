@@ -59,10 +59,6 @@ export const ExamContainer = () => {
 
   const initExam = useCallback(
     () => {
-      if (questions[0].right === '' && questions[0].src === '') {
-        navigate('/');
-      }
-
       const sanitizedLabels = questions.map((exam) => {
         return { src: exam.src, value: '', right: exam.right.replace(/-\d{1,2}/g, '') };
       });
@@ -79,10 +75,18 @@ export const ExamContainer = () => {
       });
       setExams(calculatedData);
     },
-    [questions, navigate, selectedCount],
+    [questions, selectedCount],
   );
 
-  useEffect(initExam, [initExam]);
+  useEffect(
+    () => {
+      if (questions[0].right === '' && questions[0].src === '') {
+        navigate('/');
+      }
+      initExam();
+    },
+    [initExam, navigate, questions],
+  );
 
   const handleSubmit = useCallback(
     () => {
@@ -103,9 +107,9 @@ export const ExamContainer = () => {
         // 마지막 문제면 제출
         handleSubmit();
       } else {
-        setCursor((value) => value + 1);
-        textFieldRef.current && textFieldRef.current.focus();
+        setCursor((curr) => curr + 1);
       }
+      textFieldRef.current && textFieldRef.current.focus();
     },
     [play, exams, cursor, value, selectedTime, handleSubmit],
   );
@@ -125,7 +129,7 @@ export const ExamContainer = () => {
         setTime((value) => {
           if (value === 0) {
             handleNextQuestion();
-            return Number(selectedTime);
+            return -1;
           }
           return value - 1;
         });
@@ -133,7 +137,7 @@ export const ExamContainer = () => {
 
       return () => clearInterval(timer);
     },
-    [handleNextQuestion, selectedTime],
+    [handleNextQuestion],
   );
 
   if (exams.length === 0) {
@@ -166,8 +170,8 @@ export const ExamContainer = () => {
                     src={exams[cursor].src}
                     alt=""
                     style={{
-                      width: 380,
-                      height: 250,
+                      maxWidth: 380,
+                      maxHeight: 250,
                     }}
                   />
                 </TransformComponent>
@@ -213,12 +217,14 @@ export const ExamContainer = () => {
               onClick={handleNextQuestion}
               style={{ width: 290, marginRight: 10, padding: 12 }}
             >
-              {exams.length - 1 === cursor ? '제출' : '다음'}
+              {exams.length - 1 === cursor ? '끝내기' : '다음'}
             </Button>
 
-            <Button variant="contained" color="secondary" onClick={handleSubmit} style={{ width: 55, padding: 12 }}>
-              제출
-            </Button>
+            {exams.length - 1 !== cursor && (
+              <Button variant="contained" color="secondary" onClick={handleSubmit} style={{ width: 55, padding: 12 }}>
+                끝내기
+              </Button>
+            )}
           </ButtonWrapper>
         </div>
       </Question>

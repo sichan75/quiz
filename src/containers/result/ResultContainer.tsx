@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import styled from 'styled-components';
 import { rightIcon, wrongIcon } from '../../assets/icons';
+import { VerticalSpacer } from '../../components/common/VerticalSpacer';
 import { resultsState } from '../../recoil/states';
 
 const Wrapper = styled.div`
@@ -113,6 +114,7 @@ export const ResultContainer = () => {
             </React.Fragment>
           )}
         </Exam>
+        <VerticalSpacer size={20} />
         <ExamList>
           {results.map((item, i) => {
             const isRight = item.right === item.value;

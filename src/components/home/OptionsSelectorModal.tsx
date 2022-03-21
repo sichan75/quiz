@@ -1,5 +1,5 @@
 import { Box, Button, FormControl, InputLabel, MenuItem, Modal, Select, Typography } from '@material-ui/core';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -38,9 +38,9 @@ export const OptionsSelectorModal: React.FC<OptionsSelectorModalProps> = ({ isOp
   const [count, setCount] = useState(0);
   const [time, setTime] = useState(0);
 
-  const handleClickStartButton = () => {
+  const handleClickStartButton = useCallback(() => {
     navigate(`/test/count=${count}/time=${time}`);
-  };
+  }, [navigate, count, time]);
 
   return (
     <Modal
