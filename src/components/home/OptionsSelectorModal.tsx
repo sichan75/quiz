@@ -1,6 +1,5 @@
 import { Box, Button, FormControl, InputLabel, MenuItem, Modal, Select, Typography } from '@material-ui/core';
-import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 const modalStyles = {
@@ -31,16 +30,12 @@ const SelectorWrapper = styled.div`
 interface OptionsSelectorModalProps {
   isOpen: boolean;
   onRequestClose(): void;
+  onClickStartButton(count: Number, time: Number): void;
 }
 
-export const OptionsSelectorModal: React.FC<OptionsSelectorModalProps> = ({ isOpen, onRequestClose }) => {
-  const navigate = useNavigate();
+export const OptionsSelectorModal: React.FC<OptionsSelectorModalProps> = ({ isOpen, onRequestClose, onClickStartButton }) => {
   const [count, setCount] = useState(0);
   const [time, setTime] = useState(0);
-
-  const handleClickStartButton = useCallback(() => {
-    navigate(`/test/count=${count}/time=${time}`);
-  }, [navigate, count, time]);
 
   return (
     <Modal
@@ -87,7 +82,7 @@ export const OptionsSelectorModal: React.FC<OptionsSelectorModalProps> = ({ isOp
         <Button
           variant="contained"
           color="primary"
-          onClick={handleClickStartButton}
+          onClick={() => onClickStartButton(count, time)}
           style={buttonStyle}
           disabled={!count || !time}
         >

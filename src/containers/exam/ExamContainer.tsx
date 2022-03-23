@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import OutsideClickHandler from 'react-outside-click-handler';
 import sound from '../../assets/sound.mp3';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useSetRecoilState, useRecoilValue } from 'recoil';
 import { useNavigate, useParams } from 'react-router-dom';
 import useSound from 'use-sound';
@@ -53,9 +53,10 @@ export const ExamContainer = () => {
 
   const [exams, setExams] = useState<ExamItem[]>([]);
 
-  const [time, setTime] = useState(() => Number(selectedTime));
+  const [time, setTime] = useState(Number(selectedTime));
   const [cursor, setCursor] = useState(0);
-  const [value, setValue] = useState('');
+  const value = useRef<string>('');
+  const [textFieldKey, setTextFieldKey] = useState('');
 
   const initExam = useCallback(
     () => {
@@ -99,8 +100,9 @@ export const ExamContainer = () => {
   const handleNextQuestion = useCallback(
     () => {
       play();
-      setValue('');
-      exams[cursor].value = value;
+      setTextFieldKey(new Date().valueOf().toString());
+      exams[cursor].value = value.current;
+      value.current = '';
       setTime(Number(selectedTime));
 
       if (exams.length - 1 === cursor) {
@@ -126,19 +128,23 @@ export const ExamContainer = () => {
   useEffect(
     () => {
       const timer = setInterval(() => {
-        setTime((value) => {
-          if (value === 0) {
+        setTime((time) => {
+          if (time === 0) {
             handleNextQuestion();
             return -1;
           }
-          return value - 1;
+          return time - 1;
         });
       }, 1000);
 
       return () => clearInterval(timer);
     },
-    [handleNextQuestion],
+    [handleNextQuestion, time],
   );
+
+  const handleChangeValue = (e: ChangeEvent<HTMLInputElement>) => {
+    value.current = e.target.value;
+  };
 
   if (exams.length === 0) {
     return null;
@@ -202,12 +208,12 @@ export const ExamContainer = () => {
           }}
         >
           <TextField
+            key={textFieldKey}
             inputRef={textFieldRef}
             autoFocus
             style={{ width: 380, marginTop: 30 }}
             label="정답"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={handleChangeValue}
             onKeyDown={handleKeyDown}
           />
           <ButtonWrapper>

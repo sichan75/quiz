@@ -8,6 +8,7 @@ import { VerticalSpacer } from '../../components/common/VerticalSpacer';
 import { OptionsSelectorModal } from '../../components/home/OptionsSelectorModal';
 import { deleteImage, LocalQuestionItem, uploadImage } from '../../helpers/image';
 import { getSampleQuestions } from '../../helpers/questions';
+import { useNavigate } from 'react-router-dom';
 
 const Wrapper = styled.div`
   display: flex;
@@ -71,6 +72,7 @@ const Exam = styled.div`
 
 export const HomeContainer = () => {
   const [questions, setQuestions] = useRecoilState(questionsState);
+  const navigate = useNavigate();
   const [cursor, setCursor] = useState<number | null>(null);
   const [isOptionsSelectorModalOpened, setIsOptionsSelectorModalOpened] = useState(false);
 
@@ -127,6 +129,10 @@ export const HomeContainer = () => {
     },
     [questions, setQuestions],
   );
+
+  const handleClickStartButton = useCallback((count, time) => {
+    navigate(`/test/count=${count}&time=${time}`);
+  }, [navigate]);
 
   return (
     <Wrapper>
@@ -186,6 +192,7 @@ export const HomeContainer = () => {
       <OptionsSelectorModal
         isOpen={isOptionsSelectorModalOpened}
         onRequestClose={handleRequestCloseOptionsSelectorModal}
+        onClickStartButton={handleClickStartButton}
       />
     </Wrapper>
   );

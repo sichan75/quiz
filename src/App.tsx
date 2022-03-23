@@ -11,7 +11,7 @@ export const App = () => {
       <RecoilRoot>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/test/count=:count/time=:time" element={<ExamPage />} />
+          <Route path="/test/count=:count&time=:time" element={<ExamPage />} />
           <Route path="/result" element={<ResultPage />} />
         </Routes>
       </RecoilRoot>
